@@ -9,6 +9,8 @@ app.use(express.json());
 app.use(cors());
 app.use(router);
 
+app.get('/', (_req: Request, res: Response) => res.send('Hello World!'));
+
 
 //app.use((err: Error, _req: Request, res: Response) => res.status(500).json({message: err.message}))
 

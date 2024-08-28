@@ -6,7 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const sequelize_1 = require("sequelize");
 const sequelize_2 = __importDefault(require("sequelize"));
 const _1 = __importDefault(require("."));
-const Measures_1 = __importDefault(require("./Measures"));
 class Customer extends sequelize_1.Model {
 }
 Customer.init({
@@ -25,9 +24,5 @@ Customer.init({
     tableName: 'customers',
     timestamps: false,
     underscored: true
-});
-Customer.hasMany(Measures_1.default, {
-    foreignKey: 'customerCode',
-    as: 'measures'
 });
 exports.default = Customer;

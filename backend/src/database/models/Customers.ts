@@ -26,9 +26,5 @@ Customer.init({
 }
 );
 
-Customer.hasMany(Measures, {
-    foreignKey: 'customerCode',
-    as: 'measures'
-});
 
 export default Customer;
