@@ -34,6 +34,11 @@ Measures.init({
         allowNull: false,
       },
 
+      measure_value: {
+        type: sequelize.INTEGER,
+        allowNull: false,
+      },
+
       measureType: {
         type: sequelize.STRING,
         allowNull: false

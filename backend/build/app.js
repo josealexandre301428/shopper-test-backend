@@ -11,5 +11,5 @@ app.use(express_1.default.json());
 app.use((0, cors_1.default)());
 app.use(index_1.default);
 app.get('/', (_req, res) => res.send('Hello World!'));
-//app.use((err: Error, _req: Request, res: Response) => res.status(500).json({message: err.message}))
+app.use((err, _req, res) => res.status(500).json({ message: err.message }));
 exports.default = app;

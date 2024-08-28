@@ -25,6 +25,10 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: false,
       },
+      measure_value: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+      },
 
       measure_type: {
         type: Sequelize.STRING,

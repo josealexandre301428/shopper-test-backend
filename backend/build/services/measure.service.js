@@ -24,5 +24,9 @@ class MeasureServices {
             return (0, resp_1.default)(200, measures);
         });
     }
+    uploadMeasure(body) {
+        return __awaiter(this, void 0, void 0, function* () {
+        });
+    }
 }
 exports.default = MeasureServices;

@@ -28,6 +28,19 @@ class MeasureController {
             }
         });
     }
+    uploadMeasure() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return (req, res, next) => __awaiter(this, void 0, void 0, function* () {
+                try {
+                    const uploadResponse = yield this.service.uploadMeasure(req.body);
+                    res.status(200).json(uploadResponse);
+                }
+                catch (error) {
+                    next(error);
+                }
+            });
+        });
+    }
 }
 ;
 exports.default = MeasureController;

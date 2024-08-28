@@ -1,18 +1,26 @@
-import express, { Request, Response } from  'express';
+import express, { NextFunction, Request, Response } from  'express';
 import cors from 'cors';
 import router from './routes/index';
 
 const app = express();
 
+const logger = (req: Request, res: Response, next: NextFunction) => {
+    console.log(`${req.method} ${req.path} - ${new Date()}`);
+    next();
+  };
+  
+  app.use(logger);
 
 app.use(express.json());
 app.use(cors());
 app.use(router);
 
-app.get('/', (_req: Request, res: Response) => res.send('Hello World!'));
+app.get('/', (req: Request, res: Response) => {
+    res.send('Hello World!');
+  });
 
 
-//app.use((err: Error, _req: Request, res: Response) => res.status(500).json({message: err.message}))
+
 
 export default app;
 
