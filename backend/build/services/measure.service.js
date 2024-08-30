@@ -13,19 +13,64 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const Measures_1 = __importDefault(require("../database/models/Measures"));
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 const resp_1 = __importDefault(require("../utils/resp"));
+require("dotenv/config");
 class MeasureServices {
     constructor() {
         this.model = Measures_1.default;
     }
     getAllMeasures() {
         return __awaiter(this, void 0, void 0, function* () {
-            const measures = yield this.model.findAll();
-            return (0, resp_1.default)(200, measures);
+            try {
+                const measures = yield this.model.findAll();
+                return (0, resp_1.default)(200, measures);
+            }
+            catch (error) {
+                console.error('Error fetching measures:', error);
+                return (0, resp_1.default)(500, { error: { error_code: 'INTERNAL_ERROR', error_description: 'An error occurred while fetching measures' } });
+            }
         });
     }
-    uploadMeasure(body) {
+    uploadMeasure(image, customer_code, measure_type) {
         return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const existingMeasure = yield this.model.findOne({
+                    where: {
+                        customerCode: customer_code,
+                    }
+                });
+                // if (existingMeasure) {
+                //   return {
+                //       status: 409,
+                //       error_code: 'DOUBLE_REPORT',
+                //       error_description: 'Leitura do mês já realizada'
+                //   };
+                // }
+                // const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash"});
+                // const result = await model.generateContent([
+                // "Quais numeros estao na imagem?",
+                // {inlineData: {data: image, mimeType: 'image/jpeg'}}]
+                // );
+                // const measureCreate = await this.model.create({
+                //   customerCode: customer_code,
+                //   measureUuid: uuid(),
+                //   measureDatetime: new DATE,
+                //   measureValue: Math.round(result.text),
+                //   measureType: measure_type,
+                //   hasConfirmed: false,
+                //   imageUrl: result.url
+                return existingMeasure;
+            }
+            catch (error) {
+                return {
+                    status: 500,
+                    error_code: 'INTERNAL_ERROR',
+                    error_description: 'Ocorreu um erro ao processar a medida.'
+                };
+            }
+            ;
         });
     }
 }

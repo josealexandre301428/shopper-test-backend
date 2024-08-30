@@ -30,6 +30,10 @@ Measures.init({
         type: sequelize_2.default.DATE,
         allowNull: false,
     },
+    measureValue: {
+        type: sequelize_2.default.INTEGER,
+        allowNull: false,
+    },
     measureType: {
         type: sequelize_2.default.STRING,
         allowNull: false
@@ -39,7 +43,7 @@ Measures.init({
         allowNull: false
     },
     imageUrl: {
-        type: sequelize_2.default.STRING,
+        type: sequelize_2.default.BLOB,
         allowNull: true
     }
 }, {

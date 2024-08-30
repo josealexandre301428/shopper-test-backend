@@ -1,77 +1,66 @@
 import { ModelStatic } from "sequelize";
 import Measures from "../database/models/Measures";
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 import resp from "../utils/resp";
 import { v4 as uuid } from 'uuid';
+import 'dotenv/config';
 
 
-interface upload{
-    image: string;
-    customer_code: string;
-    measure_datetime: Date;
-    measure_type: 'WATER' | 'GAS';
-}
+class MeasureServices {
+  private model: ModelStatic<Measures> = Measures;
 
-interface GeminiResponse{
-    status: number;
-    image_url: string,
-    measure_value: number
-}
-
-
-class MeasureServices{
-    private model: ModelStatic<Measures> = Measures;
-    
-
-    async getAllMeasures(){
-        const measures = await this.model.findAll();
-        return resp(200, measures);
+  async getAllMeasures(){
+    try {
+      const measures = await this.model.findAll();
+      return resp(200, measures);
+    } catch (error) {
+      console.error('Error fetching measures:', error);
+      return resp(500, { error: { error_code: 'INTERNAL_ERROR', error_description: 'An error occurred while fetching measures' } });
     }
-    async uploadMeasure(body: upload){
-        try {
-            const response = await fetch('https://api.geminivision.com/analyze', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-                body: JSON.stringify({
-                  image: body.image,
-                  task: 'OCR_NUMBERS'
-                })
-            });
-        
-            if (!response.ok) {
-              throw new Error(`Falha ao enviar dados para o Gemini Vision: ${response.statusText}`);
-            }
-            
-            const data: GeminiResponse = await response.json();
-
-            if (isNaN(data.measure_value)) {
-                throw new Error(`Extracted value is not a number: ${data.measure_value}`);
-              }
-            const measuresCreate = await this.model.create({
-                customer_code: body.customer_code,
-                measure_uuid: uuid(),
-                measure_datetime: body.measure_datetime,
-                measure_value: Math.round(data.measure_value),
-                has_confirmed: false,
-                image_url: data.image_url
-            } );
+  }
 
 
-            resp(200, {
-                message: 'Operação realizada com sucesso',
-                data: {
-                  image_url: measuresCreate.dataValues.image_url,
-                  measure_value: measuresCreate.dataValues.measure_value,
-                  measure_uuid: measuresCreate.dataValues.measure_uuid
-                }
-            });
+  async uploadMeasure(image: Blob, customer_code:string, measure_type: string){
+    try {
+      const existingMeasure = await this.model.findOne({
+        where: {
+          customerCode: customer_code,
+        }
+      });
 
-          } catch (error) {
-            console.error('Erro ao enviar medida para o Gemini Vision:', error);
-            throw new Error('Ocorreu um erro ao processar a medida.');
-          }
+      // if (existingMeasure) {
+      //   return {
+      //       status: 409,
+      //       error_code: 'DOUBLE_REPORT',
+      //       error_description: 'Leitura do mês já realizada'
+      //   };
+      // }
+
+      // const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash"});
+      // const result = await model.generateContent([
+      // "Quais numeros estao na imagem?",
+      // {inlineData: {data: image, mimeType: 'image/jpeg'}}]
+      // );
+      
+      // const measureCreate = await this.model.create({
+      //   customerCode: customer_code,
+      //   measureUuid: uuid(),
+      //   measureDatetime: new DATE,
+      //   measureValue: Math.round(result.text),
+      //   measureType: measure_type,
+      //   hasConfirmed: false,
+      //   imageUrl: result.url
+      
+      return existingMeasure;
+    } catch (error) {
+      return {
+        status: 500,
+          error_code: 'INTERNAL_ERROR',
+          error_description: 'Ocorreu um erro ao processar a medida.'
+        }
+      };
     }
-}
+  }
 
 export default MeasureServices;

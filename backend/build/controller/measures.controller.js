@@ -13,32 +13,42 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const measure_service_1 = __importDefault(require("../services/measure.service"));
+const validateUpload_1 = __importDefault(require("../utils/validateUpload"));
 class MeasureController {
     constructor() {
         this.service = new measure_service_1.default();
     }
-    getAllMeasures(req, res, next) {
+    getAllMeasures(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { status, message } = yield this.service.getAllMeasures();
-                res.status(status).json(message);
+                const measures = yield this.service.getAllMeasures();
+                res.status(200).json({ measures });
             }
             catch (error) {
-                next(error);
+                res.status(500).json({
+                    message: 'An error occurred during the upload process',
+                    error: error
+                });
             }
         });
     }
-    uploadMeasure() {
+    uploadMeasure(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
-            return (req, res, next) => __awaiter(this, void 0, void 0, function* () {
-                try {
-                    const uploadResponse = yield this.service.uploadMeasure(req.body);
-                    res.status(200).json(uploadResponse);
-                }
-                catch (error) {
-                    next(error);
-                }
-            });
+            const { image, customer_code, measure_type } = req.body;
+            const validationErrors = validateUpload_1.default.validateUpload({ image, customer_code, measure_type });
+            if (validationErrors.status == 400) {
+                return res.status(400).json({ errors: validationErrors.error_description });
+            }
+            try {
+                const uploadResponse = yield this.service.uploadMeasure(image, customer_code, measure_type);
+                res.status(201).json({ uploadResponse });
+            }
+            catch (error) {
+                res.status(500).json({
+                    message: 'An error occurred during the upload process',
+                    error: error
+                });
+            }
         });
     }
 }

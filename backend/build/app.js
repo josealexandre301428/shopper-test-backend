@@ -6,10 +6,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const index_1 = __importDefault(require("./routes/index"));
+const winston = require('winston');
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 app.use((0, cors_1.default)());
 app.use(index_1.default);
-app.get('/', (_req, res) => res.send('Hello World!'));
-app.use((err, _req, res) => res.status(500).json({ message: err.message }));
+app.get('/', (req, res) => {
+    res.send('Hello World!');
+});
 exports.default = app;

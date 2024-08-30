@@ -34,7 +34,7 @@ Measures.init({
         allowNull: false,
       },
 
-      measure_value: {
+      measureValue: {
         type: sequelize.INTEGER,
         allowNull: false,
       },
@@ -50,7 +50,7 @@ Measures.init({
       },
 
       imageUrl: {
-        type: sequelize.STRING,
+        type: sequelize.BLOB,
         allowNull: true
       }
 }, {

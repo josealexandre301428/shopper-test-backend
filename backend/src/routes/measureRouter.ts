@@ -1,5 +1,6 @@
 import { Router } from "express";
 import MeasureController from "../controller/measures.controller";
+import measureService from "../services/measure.service";
 
 const measureRouter = Router();
 const control = new MeasureController();
