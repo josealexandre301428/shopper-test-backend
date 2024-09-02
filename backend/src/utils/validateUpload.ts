@@ -1,4 +1,4 @@
-import { isBase64, isString, isDate } from 'class-validator';
+import { isBase64, isString } from 'class-validator';
 
 //Validar o tipo de dados dos parâmetros enviados (inclusive o base64)
 

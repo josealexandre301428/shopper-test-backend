@@ -26,7 +26,7 @@ class MeasureController {
             }
             catch (error) {
                 res.status(500).json({
-                    message: 'An error occurred during the upload process',
+                    message: 'An error occurred during the search for measures',
                     error: error
                 });
             }
@@ -35,19 +35,17 @@ class MeasureController {
     uploadMeasure(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             const { image, customer_code, measure_type } = req.body;
-            const validationErrors = validateUpload_1.default.validateUpload({ image, customer_code, measure_type });
-            if (validationErrors.status == 400) {
-                return res.status(400).json({ errors: validationErrors.error_description });
-            }
             try {
+                const validationErrors = validateUpload_1.default.validateUpload({ image, customer_code, measure_type });
+                if (validationErrors.status == 400) {
+                    return res.status(400).json({ errors: validationErrors.error_description });
+                }
                 const uploadResponse = yield this.service.uploadMeasure(image, customer_code, measure_type);
-                res.status(201).json({ uploadResponse });
+                const response = yield Promise.race([uploadResponse]);
+                res.status(201).json({ response });
             }
             catch (error) {
-                res.status(500).json({
-                    message: 'An error occurred during the upload process',
-                    error: error
-                });
+                return (`Erro ao realizar o upload da medida:${error}`);
             }
         });
     }
