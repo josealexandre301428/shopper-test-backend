@@ -1,30 +1,36 @@
 import { ModelStatic } from "sequelize";
-import 'dotenv/config';
+require('dotenv/config');
 import Measures from "../database/models/Measures";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import resp from "../utils/resp";
 import { v4 as uuid } from 'uuid';
-import { VisionClient } from '@google-cloud/vision';
+import validarLeitura from "../utils/validateMeasure";
 
-const client = new VisionClient();
 
-async function extractNumbersFromImage(base64Image: string) {
-    const image = {
-        content: base64Image,
-    };
-
-    const [result] = await client.textDetection(image);
-    const detections = result.textAnnotations;
-
-    const numbers = detections.map(text => {
-        return text.description.replace(/\D/g, '');
-    });
-
-    return numbers;
+interface requisition {
+  image: string;
+  customer_code: string;
+  measure_type: string;
 }
-
 
 class MeasureServices {
   private model: ModelStatic<Measures> = Measures;
+  async extractNumbers(base64Image: string, key: any) {
+    const genAI = new GoogleGenerativeAI(key);
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
+    });
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          data: base64Image,
+          mimeType: "image/jpeg"
+        }
+      },
+      { text: "Describe what numbers are in the image" },
+    ]);
+    return result.response.text()
+  }
 
   async getAllMeasures(){
     try {
@@ -37,44 +43,35 @@ class MeasureServices {
   }
 
 
-  async uploadMeasure(image: Blob, customer_code:string, measure_type: string){
+  async uploadMeasure(req: requisition){
+    const { image, customer_code, measure_type } = req;
     try {
-      const existingMeasure = await this.getAllMeasures()
-      const { message } = existingMeasure;
-      if (message.measures.length > 0 ) {
-        return {
-            status: 409,
-            error_code: 'DOUBLE_REPORT',
-            error_description: 'Leitura do mês já realizada'
-        };
+      const measures: Measures[] = await this.model.findAll({where: {customer_code}});
+      const existMeasure = await validarLeitura(measure_type, measures);
+      if(existMeasure){
+        return resp(409,
+          { error: { error_code: "DOUBLE_REPORT", error_description: "Leitura do mês já realizada"}}
+        );
       }
+      const Extract = await this.extractNumbers(image, process.env.GOOGLE_CLOUD_PROJECT);
+      const measureValue =  Number(Extract.match(/\d+/));
 
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash"});
-      const result = await model.generateContent([
-      "Quais numeros estao na imagem?",
-      {inlineData: {data: image, mimeType: 'image/jpeg'}}]
-      );
-      
+
       const measureCreate = await this.model.create({
         customerCode: customer_code,
         measureUuid: uuid(),
-        measureDatetime: new Date(),
-        measureValue: Math.round(result.text),
+        measureDate: new Date(),
+        measureValue: measureValue,
         measureType: measure_type,
-        hasConfirmed: false,
-        imageUrl: result.url
+        hasCofirmed: false,
+        imageUrl: image
     });
 
-
-      return resp(201, measureCreate);
+    return resp(201, measureCreate);
     } catch (error) {
-      return {
-        status: 500,
-          error_code: 'INTERNAL_ERROR',
-          error_description: 'Ocorreu um erro ao processar a medida.'
-        }
-      };
+        return (`Erro ao realizar o upload da medida:${error}`)
     }
   }
+}
 
 export default MeasureServices;

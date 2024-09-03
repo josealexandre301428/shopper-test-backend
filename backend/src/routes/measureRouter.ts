@@ -5,6 +5,6 @@ const measureRouter = Router();
 const control = new MeasureController();
 
 measureRouter.get('/measures', control.getAllMeasures.bind(control));
-measureRouter.post('/upload', control.uploadMeasure);
+measureRouter.post('/upload', control.uploadMeasure.bind(control));
 
 export default measureRouter;

@@ -13,7 +13,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const measure_service_1 = __importDefault(require("../services/measure.service"));
-const validateUpload_1 = __importDefault(require("../utils/validateUpload"));
 class MeasureController {
     constructor() {
         this.service = new measure_service_1.default();
@@ -34,13 +33,8 @@ class MeasureController {
     }
     uploadMeasure(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { image, customer_code, measure_type } = req.body;
             try {
-                const validationErrors = validateUpload_1.default.validateUpload({ image, customer_code, measure_type });
-                if (validationErrors.status == 400) {
-                    return res.status(400).json({ errors: validationErrors.error_description });
-                }
-                const uploadResponse = yield this.service.uploadMeasure(image, customer_code, measure_type);
+                const uploadResponse = yield this.service.uploadMeasure(req.body);
                 const response = yield Promise.race([uploadResponse]);
                 res.status(201).json({ response });
             }

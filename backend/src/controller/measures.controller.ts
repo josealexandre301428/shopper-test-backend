@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import MeasureService from '../services/measure.service';
 import validateUpload from "../utils/validateUpload";
+import resp from "../utils/resp";
 
 
 
@@ -19,14 +20,13 @@ class MeasureController {
       }
     }
     async uploadMeasure(req: Request, res: Response) {
-      const { image, customer_code, measure_type } = req.body;
-  
       try {
+        const { image, customer_code, measure_type } = req.body;
         const validationErrors = validateUpload.validateUpload({ image, customer_code, measure_type });
         if (validationErrors.status == 400) {
-          return res.status(400).json({ errors: validationErrors.error_description });
+          return resp(400, { errors: validationErrors.error_description });
         }
-          const uploadResponse = await this.service.uploadMeasure(image, customer_code, measure_type);
+          const uploadResponse = await this.service.uploadMeasure(req.body);
           const response = await Promise.race([uploadResponse]);
           res.status(201).json({response});
       } catch (error) {

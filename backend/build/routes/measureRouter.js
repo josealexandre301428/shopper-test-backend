@@ -8,5 +8,5 @@ const measures_controller_1 = __importDefault(require("../controller/measures.co
 const measureRouter = (0, express_1.Router)();
 const control = new measures_controller_1.default();
 measureRouter.get('/measures', control.getAllMeasures.bind(control));
-measureRouter.post('/upload', control.uploadMeasure);
+measureRouter.post('/upload', control.uploadMeasure.bind(control));
 exports.default = measureRouter;

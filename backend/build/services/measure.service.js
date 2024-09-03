@@ -12,15 +12,32 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-require("dotenv/config");
+require('dotenv/config');
 const Measures_1 = __importDefault(require("../database/models/Measures"));
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+const validateUpload_1 = __importDefault(require("../utils/validateUpload"));
+const generative_ai_1 = require("@google/generative-ai");
 const resp_1 = __importDefault(require("../utils/resp"));
-const uuid_1 = require("uuid");
 class MeasureServices {
     constructor() {
         this.model = Measures_1.default;
+    }
+    extractNumbers(base64Image, key) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const genAI = new generative_ai_1.GoogleGenerativeAI(key);
+            const model = genAI.getGenerativeModel({
+                model: "gemini-1.5-flash",
+            });
+            const result = yield model.generateContent([
+                {
+                    inlineData: {
+                        data: base64Image,
+                        mimeType: "image/jpeg"
+                    }
+                },
+                { text: "Describe what numbers are in the image" },
+            ]);
+            return result.response;
+        });
     }
     getAllMeasures() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -34,42 +51,20 @@ class MeasureServices {
             }
         });
     }
-    uploadMeasure(image, customer_code, measure_type) {
+    uploadMeasure(req) {
         return __awaiter(this, void 0, void 0, function* () {
+            const { image, customer_code, measure_type } = req;
             try {
-                const existingMeasure = yield this.getAllMeasures();
-                const { message } = existingMeasure;
-                if (message.measures.length > 0) {
-                    return {
-                        status: 409,
-                        error_code: 'DOUBLE_REPORT',
-                        error_description: 'Leitura do mês já realizada'
-                    };
+                const validationErrors = validateUpload_1.default.validateUpload({ image, customer_code, measure_type });
+                if (validationErrors.status == 400) {
+                    return (0, resp_1.default)(400, { errors: validationErrors.error_description });
                 }
-                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-                const result = yield model.generateContent([
-                    "Quais numeros estao na imagem?",
-                    { inlineData: { data: image, mimeType: 'image/jpeg' } }
-                ]);
-                const measureCreate = yield this.model.create({
-                    customerCode: customer_code,
-                    measureUuid: (0, uuid_1.v4)(),
-                    measureDatetime: new Date(),
-                    measureValue: Math.round(result.text),
-                    measureType: measure_type,
-                    hasConfirmed: false,
-                    imageUrl: result.url
-                });
-                return (0, resp_1.default)(201, measureCreate);
+                const measuring = yield this.extractNumbers(image, process.env.GOOGLE_CLOUD_PROJECT);
+                return measuring;
             }
             catch (error) {
-                return {
-                    status: 500,
-                    error_code: 'INTERNAL_ERROR',
-                    error_description: 'Ocorreu um erro ao processar a medida.'
-                };
+                return (`Erro ao realizar o upload da medida:${error}`);
             }
-            ;
         });
     }
 }
