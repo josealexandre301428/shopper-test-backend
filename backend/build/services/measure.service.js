@@ -14,9 +14,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 require('dotenv/config');
 const Measures_1 = __importDefault(require("../database/models/Measures"));
-const validateUpload_1 = __importDefault(require("../utils/validateUpload"));
 const generative_ai_1 = require("@google/generative-ai");
 const resp_1 = __importDefault(require("../utils/resp"));
+const uuid_1 = require("uuid");
+const validateMeasure_1 = __importDefault(require("../utils/validateMeasure"));
+const sharp = require("sharp");
 class MeasureServices {
     constructor() {
         this.model = Measures_1.default;
@@ -36,9 +38,15 @@ class MeasureServices {
                 },
                 { text: "Describe what numbers are in the image" },
             ]);
-            return result.response;
+            return result.response.text();
         });
     }
+    sharpImg(image) {
+        const buffer = Buffer.from(image, 'base64');
+        const sharpImage = sharp(buffer);
+        return sharpImage;
+    }
+    ;
     getAllMeasures() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
@@ -55,12 +63,24 @@ class MeasureServices {
         return __awaiter(this, void 0, void 0, function* () {
             const { image, customer_code, measure_type } = req;
             try {
-                const validationErrors = validateUpload_1.default.validateUpload({ image, customer_code, measure_type });
-                if (validationErrors.status == 400) {
-                    return (0, resp_1.default)(400, { errors: validationErrors.error_description });
+                const measures = yield this.model.findAll({ where: { customer_code } });
+                const existMeasure = yield (0, validateMeasure_1.default)(measure_type, measures);
+                if (existMeasure) {
+                    return (0, resp_1.default)(409, { error: { error_code: "DOUBLE_REPORT", error_description: "Leitura do mês já realizada" } });
                 }
-                const measuring = yield this.extractNumbers(image, process.env.GOOGLE_CLOUD_PROJECT);
-                return measuring;
+                const Extract = yield this.extractNumbers(image, process.env.GOOGLE_CLOUD_PROJECT);
+                const measureValue = Number(Extract.match(/\d+/));
+                const imageSharp = this.sharpImg(image);
+                const measureCreate = yield this.model.create({
+                    customerCode: customer_code,
+                    measureUuid: (0, uuid_1.v4)(),
+                    measureDate: new Date(),
+                    measureValue: measureValue,
+                    measureType: measure_type,
+                    hasCofirmed: false,
+                    imageUrl: imageSharp
+                });
+                return (0, resp_1.default)(201, measureCreate);
             }
             catch (error) {
                 return (`Erro ao realizar o upload da medida:${error}`);

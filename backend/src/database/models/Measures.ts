@@ -50,7 +50,7 @@ Measures.init({
       },
 
       imageUrl: {
-        type: sequelize.TEXT,
+        type: sequelize.BLOB,
         allowNull: true
       }
 }, {

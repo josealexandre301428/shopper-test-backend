@@ -5,6 +5,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import resp from "../utils/resp";
 import { v4 as uuid } from 'uuid';
 import validarLeitura from "../utils/validateMeasure";
+import sharp from "sharp";
 
 
 interface requisition {
@@ -32,6 +33,12 @@ class MeasureServices {
     return result.response.text()
   }
 
+  sharpImg(image: string) {
+    const buffer = Buffer.from(image, 'base64');
+    const sharpImage = sharp(buffer);
+    return sharpImage;
+  };
+
   async getAllMeasures(){
     try {
       const measures: Measures[] = await this.model.findAll();
@@ -56,6 +63,8 @@ class MeasureServices {
       const Extract = await this.extractNumbers(image, process.env.GOOGLE_CLOUD_PROJECT);
       const measureValue =  Number(Extract.match(/\d+/));
 
+      const imageSharp = this.sharpImg(image);
+
 
       const measureCreate = await this.model.create({
         customerCode: customer_code,
@@ -64,7 +73,7 @@ class MeasureServices {
         measureValue: measureValue,
         measureType: measure_type,
         hasCofirmed: false,
-        imageUrl: image
+        imageUrl: imageSharp
     });
 
     return resp(201, measureCreate);
