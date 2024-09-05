@@ -7,14 +7,9 @@ async function validarLeitura(measure_type: string, leituras: any[]): Promise<bo
     const fimMes = endOfMonth(new Date());
 
     for (const leitura of leituras) {
-        if (
-          leitura.tipoLeitura === measure_type &&
-          leitura.dataLeitura >= inicioMes &&
-          leitura.dataLeitura <= fimMes
-        ) {
-          return true;
+       if(leitura.measureType == measure_type && leitura.measureDate >= inicioMes && leitura.measureDate <= fimMes) return true;
         }
-      }
+
     
       return false;
     }

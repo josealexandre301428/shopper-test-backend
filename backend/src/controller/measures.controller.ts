@@ -27,8 +27,11 @@ class MeasureController {
           return resp(400, { errors: validationErrors.error_description });
         }
           const uploadResponse = await this.service.uploadMeasure(req.body);
-          const response = await Promise.race([uploadResponse]);
-          res.status(201).json({response});
+          const result: string | { status: number; message: any; } = await Promise.race([uploadResponse]);
+          if (typeof result === 'object' && result !== null && 'status' in result) {
+           return res.status(409).json({result});
+        }
+        res.status(201).json({result});
       } catch (error) {
           return (`Erro ao realizar o upload da medida:${error}`)
       }

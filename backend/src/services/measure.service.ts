@@ -56,15 +56,14 @@ class MeasureServices {
       const measures: Measures[] = await this.model.findAll({where: {customer_code}});
       const existMeasure = await validarLeitura(measure_type, measures);
       if(existMeasure){
-        return resp(409,
-          { error: { error_code: "DOUBLE_REPORT", error_description: "Leitura do mês já realizada"}}
-        );
+         return resp(409,
+           { error: {error_code: "DOUBLE_REPORT", error_description: "Leitura do mês já realizada"}}
+         );
       }
       const Extract = await this.extractNumbers(image, process.env.GOOGLE_CLOUD_PROJECT);
       const measureValue =  Number(Extract.match(/\d+/));
 
       const imageSharp = this.sharpImg(image);
-
 
       const measureCreate = await this.model.create({
         customerCode: customer_code,
